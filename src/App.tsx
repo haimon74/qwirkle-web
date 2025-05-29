@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { generateTiles, shuffle, drawTiles, isValidPlacement } from './game/logic';
-import { GameState, Tile, Player } from './game/types';
+import { GameState, Tile, Player, GameConfig } from './game/types';
 import { Board } from './components/Board';
 import { Hand } from './components/Hand';
 import { Scoreboard } from './components/Scoreboard';
 
-function initialGameState(): GameState {
-  let bag = shuffle(generateTiles());
+const DEFAULT_CONFIG: GameConfig = {
+  numColors: 6,
+  numShapes: 6,
+};
+
+function initialGameState(config: GameConfig = DEFAULT_CONFIG): GameState {
+  let bag = shuffle(generateTiles(config));
   const players: Player[] = [
     { name: 'You', hand: [], score: 0, isComputer: false },
     { name: 'Computer', hand: [], score: 0, isComputer: true },
@@ -22,12 +27,136 @@ function initialGameState(): GameState {
     players,
     currentPlayer: 0,
     gameOver: false,
+    config,
   };
 }
+
+const ConfigModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  config: GameConfig;
+  onConfigChange: (key: keyof GameConfig, value: any) => void;
+  onStartGame: () => void;
+}> = ({ isOpen, onClose, config, onConfigChange, onStartGame }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+    }}>
+      <div style={{
+        background: 'white',
+        padding: 24,
+        borderRadius: 8,
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        minWidth: 300,
+      }}>
+        <h2 style={{ marginTop: 0, marginBottom: 20 }}>New Game Configuration</h2>
+        
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', marginBottom: 8 }}>Number of Colors:</label>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <label>
+              <input
+                type="radio"
+                name="numColors"
+                value={6}
+                checked={config.numColors === 6}
+                onChange={() => onConfigChange('numColors', 6)}
+              />
+              6 Colors
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="numColors"
+                value={7}
+                checked={config.numColors === 7}
+                onChange={() => onConfigChange('numColors', 7)}
+              />
+              7 Colors
+            </label>
+          </div>
+        </div>
+        
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ display: 'block', marginBottom: 8 }}>Number of Shapes:</label>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <label>
+              <input
+                type="radio"
+                name="numShapes"
+                value={6}
+                checked={config.numShapes === 6}
+                onChange={() => onConfigChange('numShapes', 6)}
+              />
+              6  Shapes
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="numShapes"
+                value={7}
+                checked={config.numShapes === 7}
+                onChange={() => onConfigChange('numShapes', 7)}
+              />
+              7 Shapes
+            </label>
+          </div>
+        </div>
+
+        <div style={{ 
+          display: 'flex', 
+          gap: 12,
+          justifyContent: 'flex-end',
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 4,
+              border: '1px solid #ccc',
+              background: '#f5f5f5',
+              cursor: 'pointer',
+              fontSize: 16,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onStartGame}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 4,
+              border: '1px solid #4CAF50',
+              background: '#4CAF50',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: 16,
+            }}
+          >
+            Start Game
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [game, setGame] = useState<GameState>(initialGameState());
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+  const [gameConfig, setGameConfig] = useState<GameConfig>(DEFAULT_CONFIG);
+  const [showConfig, setShowConfig] = useState(false);
 
   const currentPlayer = game.players[game.currentPlayer];
   const isHumanTurn = !currentPlayer.isComputer && !game.gameOver;
@@ -150,29 +279,58 @@ const App: React.FC = () => {
     setSelectedTileId(null);
   };
 
+  const handleNewGameClick = () => {
+    setShowConfig(true);
+  };
+
+  const handleConfigChange = (key: keyof GameConfig, value: any) => {
+    setGameConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleStartGame = () => {
+    setGame(initialGameState(gameConfig));
+    setSelectedTileId(null);
+    setShowConfig(false);
+  };
+
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', minHeight: '100vh', padding: 24, paddingTop: 0 }}>
-      <h1>Shape Tiling</h1>
-      <button
-        style={{ marginBottom: 16, padding: '8px 20px', fontSize: 18, borderRadius: 6, border: '1px solid #888', background: '#f5f5f5', cursor: 'pointer' }}
-        onClick={() => {
-          setGame(initialGameState());
-          setSelectedTileId(null);
-        }}
-      >
-        New Game
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h1 style={{ margin: 0 }}>Tiling Race</h1>
+        <button
+          style={{ 
+            padding: '8px 20px', 
+            fontSize: 18, 
+            borderRadius: 6, 
+            border: '1px solid #888', 
+            background: '#f5f5f5', 
+            cursor: 'pointer',
+          }}
+          onClick={handleNewGameClick}
+        >
+          New Game
+        </button>
+      </div>
+
+      <ConfigModal
+        isOpen={showConfig}
+        onClose={() => setShowConfig(false)}
+        config={gameConfig}
+        onConfigChange={handleConfigChange}
+        onStartGame={handleStartGame}
+      />
+
       {game.gameOver && (
         <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ff9800', marginBottom: 16 }}>
           Game Over! Winner: {game.winner !== undefined ? game.players[game.winner].name : 'Tie!'}
         </div>
       )}
+
       <div>
         <Hand tiles={game.players[0].hand} onTileClick={handleTileClick} selectedTileId={selectedTileId || undefined} />
       </div>
       <Board board={game.board} onTilePlace={handleTilePlace} selectedTile={currentPlayer.hand.find(t => t.id === selectedTileId) || null} />
       <Scoreboard players={game.players} currentPlayer={game.currentPlayer} />
-      
     </div>
   );
 };

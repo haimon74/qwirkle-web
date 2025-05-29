@@ -1,5 +1,13 @@
-export type Color = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
-export type Shape = 'circle' | 'square' | 'triangle' | 'hexagon' | 'octagon' | 'starofdavid';
+export type Color = 'red' | 'orange' | 'yellow' | 'green' | 'deep_sky_blue' | 'purple' | 'pink';
+
+export type SimpleShape = '♠' | '♥' | '♦' | '♣' | '▲' | '▣' | '★';
+
+export type Shape = SimpleShape;
+
+export interface GameConfig {
+  numColors: 6 | 7;
+  numShapes: 6 | 7;
+}
 
 export interface Tile {
   color: Color;
@@ -21,4 +29,5 @@ export interface GameState {
   currentPlayer: number;
   gameOver: boolean;
   winner?: number;
+  config: GameConfig;
 } 

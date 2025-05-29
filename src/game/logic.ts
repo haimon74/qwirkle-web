@@ -1,15 +1,20 @@
-import { Color, Shape, Tile } from './types';
+import { Color, Shape, Tile, GameConfig, SimpleShape } from './types';
 
-const COLORS: Color[] = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
-const SHAPES: Shape[] = ['circle', 'square', 'triangle', 'hexagon', 'octagon', 'starofdavid'];
+const ALL_COLORS: Color[] = ['red', 'orange', 'yellow', 'green', 'deep_sky_blue', 'purple', 'pink'];
+const ALL_SIMPLE_SHAPES: SimpleShape[] = ['♠', '♥', '♦', '♣', '▲', '▣', '★'];
 
-export function generateTiles(): Tile[] {
+export function generateTiles(config: GameConfig): Tile[] {
   const tiles: Tile[] = [];
-  let id = 0;
-  for (const color of COLORS) {
-    for (const shape of SHAPES) {
+  const colors = ALL_COLORS.slice(0, config.numColors);
+  const shapes = ALL_SIMPLE_SHAPES.slice(0, config.numShapes);
+  for (const color of colors) {
+    for (const shape of shapes) {
       for (let i = 0; i < 3; i++) {
-        tiles.push({ color, shape, id: `${color}-${shape}-${i}` });
+        tiles.push({ 
+          color, 
+          shape, 
+          id: `${color}-${shape}-${i}` 
+        });
       }
     }
   }
@@ -17,12 +22,12 @@ export function generateTiles(): Tile[] {
 }
 
 export function shuffle<T>(array: T[]): T[] {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
-  return arr;
+  return newArray;
 }
 
 export function drawTiles(bag: Tile[], count: number): { drawn: Tile[]; bag: Tile[] } {
